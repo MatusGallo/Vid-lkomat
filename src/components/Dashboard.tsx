@@ -131,15 +131,19 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
     <div className="od-fade">
       <div className="od-head"><h1>Souhrn {settings.selectedYear}</h1></div>
 
-      <div className="od-kpis">
+      <div className="od-kpis-solo">
         <Kpi
-          label="Dnešní výdělek"
-          value={czk(day.total)}
-          series={day.series}
+          label={`Dnešní výdělek (zisk ${PROFIT_PCT} %)`}
+          value={czk(day.total * PROFIT_RATE)}
+          series={day.series.map((v) => v * PROFIT_RATE)}
+          accent
           change={day.total > 0 ? day.change : undefined}
           changeLabel="vs. předchozí den"
           foot={day.total === 0 ? "zatím dnes žádný zápis" : undefined}
         />
+      </div>
+
+      <div className="od-kpis">
         <Kpi
           label="Celkový obrat"
           value={czk(year.total)}
