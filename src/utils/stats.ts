@@ -50,6 +50,29 @@ export function activeMonthsOf(months: MonthStat[], year: number): number[] {
   return idx.length ? idx : [CURRENT_MONTH];
 }
 
+export function dayStat(
+  entries: Entry[],
+  today: string,
+  sparkDays = 14,
+): { total: number; change: MoMChange; series: number[] } {
+  const byDate = new Map<string, number>();
+  entries.forEach((e) => byDate.set(e.date, (byDate.get(e.date) ?? 0) + e.amount));
+  const total = byDate.get(today) ?? 0;
+  const prevDates = Array.from(byDate.keys()).filter((d) => d < today).sort();
+  const prevDate = prevDates[prevDates.length - 1];
+  const prev = prevDate ? byDate.get(prevDate) ?? 0 : 0;
+  const change: MoMChange = prev ? { pct: ((total - prev) / prev) * 100, up: total >= prev } : null;
+  const series: number[] = [];
+  const base = new Date(today + "T00:00:00");
+  for (let i = sparkDays - 1; i >= 0; i--) {
+    const d = new Date(base);
+    d.setDate(base.getDate() - i);
+    const iso = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    series.push(byDate.get(iso) ?? 0);
+  }
+  return { total, change, series };
+}
+
 export function mom(shown: MonthStat[], sel: (m: MonthStat) => number): MoMChange {
   const wd = shown.filter((m) => m.count > 0);
   if (wd.length < 2) return null;

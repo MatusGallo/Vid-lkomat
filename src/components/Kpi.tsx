@@ -8,12 +8,13 @@ type Props = {
   unit?: string;
   series?: number[];
   change?: MoMChange;
+  changeLabel?: string;
   accent?: boolean;
   foot?: string;
   extraFoot?: string;
 };
 
-export function Kpi({ label, value, unit, series = [], change, accent, foot, extraFoot }: Props) {
+export function Kpi({ label, value, unit, series = [], change, changeLabel = "vs. minulý měsíc", accent, foot, extraFoot }: Props) {
   const max = Math.max(...series, 1);
   return (
     <div className={"od-kpi" + (accent ? " is-accent" : "")}>
@@ -40,7 +41,7 @@ export function Kpi({ label, value, unit, series = [], change, accent, foot, ext
         ) : change ? (
           <span className={change.up ? "up" : "down"}>
             {change.up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}{" "}
-            {num1(Math.abs(change.pct))} % <em>vs. minulý měsíc</em>
+            {num1(Math.abs(change.pct))} % <em>{changeLabel}</em>
           </span>
         ) : (
           <span className="flat">

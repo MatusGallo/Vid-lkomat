@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Entry, Stats, TrendMode, TrendPoint } from "../types";
 import { MONTHS, MONTHS_SHORT, CURRENT_MONTH, CURRENT_YEAR, PROFIT_RATE, PROFIT_PCT } from "../constants";
 import { czk, dateLabel, parseAmount, todayISO } from "../utils/format";
-import { mom, yearOf } from "../utils/stats";
+import { dayStat, mom, yearOf } from "../utils/stats";
 import { useSettings } from "../utils/SettingsContext";
 import { useRowEdit } from "../hooks/useRowEdit";
 import { Truck, BadgeCheck } from "../icons";
@@ -48,7 +48,9 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
   }, [yearEntries, filter]);
   const visible = filtered.slice(0, 20);
 
-  const [trendMode, setTrendMode] = useState<TrendMode>("months");
+  const day = useMemo(() => dayStat(entries, todayISO()), [entries]);
+
+  const [trendMode, setTrendMode] = useState<TrendMode>("days");
 
   const trendPoints = useMemo<TrendPoint[]>(() => {
     if (trendMode === "months") {
@@ -130,6 +132,14 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
       <div className="od-head"><h1>Souhrn {settings.selectedYear}</h1></div>
 
       <div className="od-kpis">
+        <Kpi
+          label="Dnešní výdělek"
+          value={czk(day.total)}
+          series={day.series}
+          change={day.total > 0 ? day.change : undefined}
+          changeLabel="vs. předchozí den"
+          foot={day.total === 0 ? "zatím dnes žádný zápis" : undefined}
+        />
         <Kpi
           label="Celkový obrat"
           value={czk(year.total)}
