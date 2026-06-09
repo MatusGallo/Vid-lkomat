@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Entry, View } from "./types";
 import { loadEntries, saveEntries } from "./utils/storage";
+import { apiList, apiUpsert, apiDelete } from "./utils/api";
 import { activeMonthsOf, availableYears, computeStats } from "./utils/stats";
 import { uid } from "./utils/format";
 import { useSettings } from "./utils/SettingsContext";
@@ -19,23 +20,50 @@ export default function App() {
   const [pendingDelete, setPendingDelete] = useState<Entry | null>(null);
   const [quickOpen, setQuickOpen] = useState(false);
 
-  const persist = (next: Entry[]) => {
+  // Aktualizuj UI + lokální cache okamžitě (optimistic update).
+  const cache = (next: Entry[]) => {
     setEntries(next);
     saveEntries(next);
   };
-  const addEntry = (m: number, date: string, amount: number) =>
-    persist(entries.concat([{ id: uid(), m, date, amount }]));
-  const removeEntry = (id: string) => persist(entries.filter((e) => e.id !== id));
-  const updateEntry = (id: string, amount: number, date?: string) =>
-    persist(
-      entries.map((e) => {
-        if (e.id !== id) return e;
-        if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-          return { ...e, amount, date, m: parseInt(date.slice(5, 7), 10) - 1 };
-        }
-        return { ...e, amount };
-      }),
-    );
+
+  // Při startu sesynchronizuj s serverem. Lokální záznamy, které na serveru
+  // chybí (první migrace z localStorage nebo offline úpravy), nahraj nahoru;
+  // u konfliktů podle id vítězí server. Offline → ponecháme lokální cache.
+  useEffect(() => {
+    apiList()
+      .then(async (server) => {
+        const serverIds = new Set(server.map((e) => e.id));
+        const localOnly = loadEntries().filter((e) => !serverIds.has(e.id));
+        await Promise.all(localOnly.map((e) => apiUpsert(e).catch(() => {})));
+        cache(server.concat(localOnly));
+      })
+      .catch(() => {
+        /* offline / chyba serveru: pokračujeme s lokální cache */
+      });
+  }, []);
+
+  const addEntry = (m: number, date: string, amount: number) => {
+    const e: Entry = { id: uid(), m, date, amount };
+    cache(entries.concat([e]));
+    apiUpsert(e).catch(() => {});
+  };
+  const removeEntry = (id: string) => {
+    cache(entries.filter((e) => e.id !== id));
+    apiDelete(id).catch(() => {});
+  };
+  const updateEntry = (id: string, amount: number, date?: string) => {
+    let updated: Entry | undefined;
+    const next = entries.map((e) => {
+      if (e.id !== id) return e;
+      updated =
+        date && /^\d{4}-\d{2}-\d{2}$/.test(date)
+          ? { ...e, amount, date, m: parseInt(date.slice(5, 7), 10) - 1 }
+          : { ...e, amount };
+      return updated;
+    });
+    cache(next);
+    if (updated) apiUpsert(updated).catch(() => {});
+  };
 
   const stats = useMemo(
     () => computeStats(entries, settings.selectedYear),

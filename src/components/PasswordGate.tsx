@@ -3,9 +3,12 @@ import { Truck } from "../icons";
 
 const HASH = "7e11bc65a7852d1c5833549ad3a1bbc743deac167c2f18ae11b7b2784dd8d00d";
 export const AUTH_KEY = "vydelkomat_auth_v1";
+// Heslo si držíme v paměti session, aby se posílalo jako bearer token na /api.
+export const AUTH_PW_KEY = "vydelkomat_pw_v1";
 
 export function logout(): void {
   sessionStorage.removeItem(AUTH_KEY);
+  sessionStorage.removeItem(AUTH_PW_KEY);
   window.location.reload();
 }
 
@@ -36,6 +39,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
     const h = await sha256(val);
     if (h === HASH) {
       sessionStorage.setItem(AUTH_KEY, "1");
+      sessionStorage.setItem(AUTH_PW_KEY, val);
       setAuthed(true);
     } else {
       setErr(true);
