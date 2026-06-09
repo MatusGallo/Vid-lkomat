@@ -108,6 +108,9 @@ html, body { margin: 0; padding: 0; background: #141210; }
 
 /* KPI */
 .od-kpis-solo { margin-bottom: 16px; }
+.od-kpis-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.od-kpis-bar-label { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.od-month-sel { font-size: 13px; padding: 5px 10px; }
 .od-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px; }
 .od-kpi { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
 .od-kpi.is-accent { border-color: var(--orange-dim); }

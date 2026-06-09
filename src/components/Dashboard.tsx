@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Entry, Stats, TrendMode, TrendPoint } from "../types";
 import { MONTHS, MONTHS_SHORT, CURRENT_MONTH, CURRENT_YEAR, PROFIT_RATE, PROFIT_PCT } from "../constants";
 import { czk, dateLabel, parseAmount, todayISO } from "../utils/format";
-import { dayStat, mom, yearOf } from "../utils/stats";
+import { dayStat, monthChange, yearOf } from "../utils/stats";
 import { useSettings } from "../utils/SettingsContext";
 import { useRowEdit } from "../hooks/useRowEdit";
 import { Truck, BadgeCheck } from "../icons";
@@ -49,6 +49,15 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
   const visible = filtered.slice(0, 20);
 
   const day = useMemo(() => dayStat(entries, todayISO()), [entries]);
+
+  const [selMonth, setSelMonth] = useState(CURRENT_MONTH);
+  const monthInView = activeMonths.includes(selMonth)
+    ? selMonth
+    : settings.selectedYear === CURRENT_YEAR && activeMonths.includes(CURRENT_MONTH)
+      ? CURRENT_MONTH
+      : activeMonths[activeMonths.length - 1];
+  const month = months[monthInView];
+  const monthPos = activeMonths.indexOf(monthInView);
 
   const [trendMode, setTrendMode] = useState<TrendMode>("days");
 
@@ -133,37 +142,57 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
 
       <div className="od-kpis-solo">
         <Kpi
-          label={`Dnešní výdělek (zisk ${PROFIT_PCT} %)`}
+          label="Dnešní zisk"
           value={czk(day.total * PROFIT_RATE)}
           series={day.series.map((v) => v * PROFIT_RATE)}
           accent
           change={day.total > 0 ? day.change : undefined}
           changeLabel="vs. předchozí den"
+          extraFoot={day.prevDate ? `Předchozí den ${dateLabel(day.prevDate)}: ${czk(day.prev * PROFIT_RATE)}` : undefined}
           foot={day.total === 0 ? "zatím dnes žádný zápis" : undefined}
         />
+      </div>
+
+      <div className="od-kpis-bar">
+        <span className="od-kpis-bar-label">Přehled za měsíc</span>
+        <select
+          className="od-year-sel od-month-sel"
+          value={monthInView}
+          onChange={(e) => setSelMonth(parseInt(e.target.value, 10))}
+        >
+          {activeMonths.map((i) => (
+            <option key={i} value={i}>
+              {MONTHS[i]} {settings.selectedYear}
+              {i === CURRENT_MONTH && settings.selectedYear === CURRENT_YEAR ? " — aktuální" : ""}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="od-kpis">
         <Kpi
           label="Celkový obrat"
-          value={czk(year.total)}
+          value={czk(month.total)}
           series={shown.map((m) => m.total)}
-          change={mom(shown, (m) => m.total)}
+          nowIndex={monthPos}
+          change={monthChange(months, monthInView, (m) => m.total)}
         />
         <Kpi
           label={`Čistý zisk ${PROFIT_PCT} %`}
-          value={czk(year.profit)}
+          value={czk(month.profit)}
           series={shown.map((m) => m.profit)}
+          nowIndex={monthPos}
           accent
-          change={mom(shown, (m) => m.profit)}
-          extraFoot={year.days ? `Ø ${czk(year.avgProfitPerDay)} / den (${year.days} dní)` : undefined}
+          change={monthChange(months, monthInView, (m) => m.profit)}
+          extraFoot={month.days ? `Ø ${czk(month.avgProfitPerDay)} / den (${month.days} dní)` : undefined}
         />
         <Kpi
           label="Počet zásahů"
-          value={String(year.count)}
+          value={String(month.count)}
           unit="zásahů"
           series={shown.map((m) => m.count)}
-          change={mom(shown, (m) => m.count)}
+          nowIndex={monthPos}
+          change={monthChange(months, monthInView, (m) => m.count)}
         />
       </div>
 

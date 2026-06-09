@@ -54,12 +54,12 @@ export function dayStat(
   entries: Entry[],
   today: string,
   sparkDays = 14,
-): { total: number; change: MoMChange; series: number[] } {
+): { total: number; prev: number; prevDate: string | null; change: MoMChange; series: number[] } {
   const byDate = new Map<string, number>();
   entries.forEach((e) => byDate.set(e.date, (byDate.get(e.date) ?? 0) + e.amount));
   const total = byDate.get(today) ?? 0;
   const prevDates = Array.from(byDate.keys()).filter((d) => d < today).sort();
-  const prevDate = prevDates[prevDates.length - 1];
+  const prevDate = prevDates.length ? prevDates[prevDates.length - 1] : null;
   const prev = prevDate ? byDate.get(prevDate) ?? 0 : 0;
   const change: MoMChange = prev ? { pct: ((total - prev) / prev) * 100, up: total >= prev } : null;
   const series: number[] = [];
@@ -70,7 +70,17 @@ export function dayStat(
     const iso = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     series.push(byDate.get(iso) ?? 0);
   }
-  return { total, change, series };
+  return { total, prev, prevDate, change, series };
+}
+
+// Porovnání vybraného měsíce s předchozím měsícem (v rámci roku).
+export function monthChange(months: MonthStat[], mi: number, sel: (m: MonthStat) => number): MoMChange {
+  const prev = mi > 0 ? months[mi - 1] : undefined;
+  if (!prev || prev.count === 0) return null;
+  const cur = sel(months[mi]);
+  const prevV = sel(prev);
+  if (!prevV) return null;
+  return { pct: ((cur - prevV) / prevV) * 100, up: cur >= prevV };
 }
 
 export function mom(shown: MonthStat[], sel: (m: MonthStat) => number): MoMChange {
