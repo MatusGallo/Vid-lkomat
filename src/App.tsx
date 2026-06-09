@@ -9,7 +9,7 @@ import { Dashboard } from "./components/Dashboard";
 import { MonthView } from "./components/MonthView";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { QuickAddModal } from "./components/QuickAddModal";
-import { Truck, Menu } from "./icons";
+import { Truck, Menu, Plus } from "./icons";
 
 export default function App() {
   const { settings } = useSettings();
@@ -140,11 +140,26 @@ export default function App() {
       <QuickAddModal
         open={quickOpen}
         onClose={() => setQuickOpen(false)}
-        onAdd={(m, date, amount) => {
-          addEntry(m, date, amount);
-          setQuickOpen(false);
-        }}
+        onAdd={addEntry}
       />
+
+      <button
+        className="od-fab-menu"
+        onClick={() => setNavOpen(true)}
+        aria-label="Otevřít menu"
+        title="Menu"
+      >
+        <Menu size={22} />
+      </button>
+
+      <button
+        className="od-fab"
+        onClick={() => setQuickOpen(true)}
+        aria-label="Přidat zásah"
+        title="Přidat zásah"
+      >
+        <Plus size={20} /> <span>Přidat zásah</span>
+      </button>
     </div>
   );
 }

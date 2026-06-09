@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PROFIT_RATE, PROFIT_PCT } from "../constants";
 import { czk, groupAmount, parseAmount, todayISO } from "../utils/format";
-import { Plus, X } from "../icons";
+import { Plus, X, Check } from "../icons";
 
 type Props = {
   open: boolean;
@@ -13,14 +13,24 @@ export function QuickAddModal({ open, onClose, onAdd }: Props) {
   const [date, setDate] = useState(todayISO());
   const [amount, setAmount] = useState("");
   const [err, setErr] = useState("");
+  const [keepOpen, setKeepOpen] = useState(false);
+  const [justAdded, setJustAdded] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const flashTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (open) {
       setDate(todayISO());
       setAmount("");
       setErr("");
+      setJustAdded(null);
       requestAnimationFrame(() => inputRef.current?.focus());
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+        if (flashTimer.current) window.clearTimeout(flashTimer.current);
+      };
     }
   }, [open]);
 
@@ -29,7 +39,7 @@ export function QuickAddModal({ open, onClose, onAdd }: Props) {
   const submit = () => {
     const v = parseAmount(amount);
     if (v === null || v <= 0) {
-      setErr("Zadej platnou částku větší než 0.");
+      setErr("Zadej částku větší než 0.");
       return;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -38,6 +48,17 @@ export function QuickAddModal({ open, onClose, onAdd }: Props) {
     }
     const m = parseInt(date.slice(5, 7), 10) - 1;
     onAdd(m, date, v);
+
+    if (keepOpen) {
+      setJustAdded(czk(v));
+      setAmount("");
+      setErr("");
+      requestAnimationFrame(() => inputRef.current?.focus());
+      if (flashTimer.current) window.clearTimeout(flashTimer.current);
+      flashTimer.current = window.setTimeout(() => setJustAdded(null), 1800);
+    } else {
+      onClose();
+    }
   };
 
   return (
@@ -63,18 +84,45 @@ export function QuickAddModal({ open, onClose, onAdd }: Props) {
               inputMode="decimal"
               placeholder="např. 3 500"
               value={amount}
-              onChange={(e) => setAmount(groupAmount(e.target.value))}
+              aria-invalid={!!err}
+              onChange={(e) => {
+                setAmount(groupAmount(e.target.value));
+                if (err) setErr("");
+              }}
               onKeyDown={(e) => e.key === "Enter" && submit()}
             />
+            {err && (
+              <div className="od-err-box">
+                <span className="od-err-ico" aria-hidden="true">!</span>
+                {err}
+              </div>
+            )}
           </div>
           <div className="od-field">
             <label>Zisk {PROFIT_PCT} %</label>
             <div className="od-preview mono">{preview ? czk(preview * PROFIT_RATE) : "–"}</div>
           </div>
+          <label className="od-check">
+            <input
+              type="checkbox"
+              checked={keepOpen}
+              onChange={(e) => setKeepOpen(e.target.checked)}
+            />
+            <span className="od-check-box" aria-hidden="true">
+              {keepOpen && <Check size={13} />}
+            </span>
+            <span>Po přidání nezavírat (přidat více záznamů)</span>
+          </label>
+          {justAdded && (
+            <div className="od-add-flash">
+              <Check size={15} /> Přidáno {justAdded}
+            </div>
+          )}
         </div>
-        {err && <p className="od-err">{err}</p>}
         <div className="od-modal-acts">
-          <button className="od-modal-cancel" onClick={onClose}>Zrušit</button>
+          <button className="od-modal-cancel" onClick={onClose}>
+            {keepOpen ? "Hotovo" : "Zrušit"}
+          </button>
           <button className="od-add" onClick={submit}>
             <Plus size={16} /> Přidat
           </button>

@@ -26,7 +26,10 @@ export function Sidebar({
       <div className="od-brand">
         <Truck size={22} className="od-brand-ico" />
         <span className="od-brand-name">Vydělkomat</span>
-        <button className="od-side-close" onClick={onClose}>
+        <button className="od-side-logout" onClick={logout} title="Odhlásit se" aria-label="Odhlásit se">
+          <LogOut size={18} />
+        </button>
+        <button className="od-side-close" onClick={onClose} aria-label="Zavřít menu">
           <X size={18} />
         </button>
       </div>
@@ -75,6 +78,10 @@ export function Sidebar({
 
       <button className="od-logout" onClick={logout} title="Odhlásit se">
         <LogOut size={16} /> <span>Odhlásit</span>
+      </button>
+
+      <button className="od-side-close-bottom" onClick={onClose} aria-label="Zavřít menu">
+        <X size={18} /> <span>Zavřít</span>
       </button>
     </aside>
   );
