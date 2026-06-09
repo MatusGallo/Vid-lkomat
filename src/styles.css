@@ -283,7 +283,14 @@ html, body { margin: 0; padding: 0; background: #141210; }
 .od-field.grow { flex: 1 1 200px; }
 .od-field label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
 .od-field input { background: var(--bg); border: 1px solid var(--line2); border-radius: 11px; color: var(--txt); padding: 0 14px; height: 46px; font-size: 16px; font-family: 'JetBrains Mono', monospace; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
-.od-field input[type="date"] { display: block; }
+.od-field input[type="date"] {
+  display: block; text-align: left;
+  -webkit-appearance: none; appearance: none;
+}
+.od-field input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+.od-field input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(.7); cursor: pointer; opacity: .7;
+}
 .od-field input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-soft); }
 .od-preview { height: 46px; display: flex; align-items: center; padding: 0 14px; background: var(--bg); border: 1px dashed var(--green); border-radius: 11px; color: var(--green); font-weight: 600; }
 .od-add { display: inline-flex; align-items: center; gap: 7px; height: 46px; padding: 0 22px; background: var(--orange); color: #1a0f06; border: none; border-radius: 11px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; box-shadow: 0 4px 16px var(--orange-soft); transition: .13s; }
