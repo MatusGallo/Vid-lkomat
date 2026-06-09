@@ -1,0 +1,18 @@
+{
+  "name": "Vydělkomat",
+  "short_name": "Vydělkomat",
+  "description": "Evidence zásahů a obratu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#141210",
+  "theme_color": "#f4711e",
+  "lang": "cs",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
