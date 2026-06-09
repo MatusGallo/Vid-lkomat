@@ -8,17 +8,25 @@ export function computeStats(entries: Entry[], year: number): Stats {
     const total = list.reduce((s, e) => s + e.amount, 0);
     const count = list.length;
     const profit = total * PROFIT_RATE;
+    const days = new Set(list.map((e) => e.date)).size;
     return {
       total,
       profit,
       count,
+      days,
       avgAmount: count ? total / count : 0,
       avgProfit: count ? profit / count : 0,
+      avgProfitPerDay: days ? profit / days : 0,
     };
   });
   const total = months.reduce((s, m) => s + m.total, 0);
   const count = months.reduce((s, m) => s + m.count, 0);
-  return { months, year: { total, profit: total * PROFIT_RATE, count } };
+  const days = new Set(yearEntries.map((e) => e.date)).size;
+  const profit = total * PROFIT_RATE;
+  return {
+    months,
+    year: { total, profit, count, days, avgProfitPerDay: days ? profit / days : 0 },
+  };
 }
 
 export function yearOf(iso: string): number {

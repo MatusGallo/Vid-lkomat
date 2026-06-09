@@ -65,6 +65,7 @@ export function MonthView({ m, entries, monthStat, onAdd, onEdit, onRequestDelet
           series={sorted.map((e) => e.amount * PROFIT_RATE)}
           accent
           foot={"Ø " + czk(monthStat.avgProfit) + " / zásah"}
+          extraFoot={monthStat.days ? `Ø ${czk(monthStat.avgProfitPerDay)} / den (${monthStat.days} dní)` : undefined}
         />
         <Kpi
           label="Počet zásahů"

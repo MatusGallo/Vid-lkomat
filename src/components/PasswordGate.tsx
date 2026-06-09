@@ -2,7 +2,12 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Truck } from "../icons";
 
 const HASH = "7e11bc65a7852d1c5833549ad3a1bbc743deac167c2f18ae11b7b2784dd8d00d";
-const AUTH_KEY = "vydelkomat_auth_v1";
+export const AUTH_KEY = "vydelkomat_auth_v1";
+
+export function logout(): void {
+  sessionStorage.removeItem(AUTH_KEY);
+  window.location.reload();
+}
 
 async function sha256(text: string): Promise<string> {
   const enc = new TextEncoder().encode(text);

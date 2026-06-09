@@ -29,8 +29,10 @@ export function SummaryTable({ shown, year, active, activeMonths }: Props) {
     { label: "Celková částka", cell: (m) => m.count ? czk(m.total) : "–", yr: czk(year.total), av: czk(avgM(year.total)), k: "strong" },
     { label: `Čistý zisk ${PROFIT_PCT} %`, cell: (m) => m.count ? czk(m.profit) : "–", yr: czk(year.profit), av: czk(avgM(year.profit)), k: "profit" },
     { label: "Počet zásahů", cell: (m) => m.count || "–", yr: year.count, av: num1(avgM(year.count)), k: "" },
+    { label: "Pracovní dny", cell: (m) => m.days || "–", yr: year.days, av: num1(avgM(year.days)), k: "" },
     { label: "Ø částka / zásah", cell: (m) => m.count ? czk(m.avgAmount) : "–", yr: czk(year.count ? year.total / year.count : 0), av: czk(avgOf((m) => m.avgAmount)), k: "" },
     { label: "Ø zisk / zásah", cell: (m) => m.count ? czk(m.avgProfit) : "–", yr: czk(year.count ? year.profit / year.count : 0), av: czk(avgOf((m) => m.avgProfit)), k: "profit" },
+    { label: "Ø zisk / den", cell: (m) => m.days ? czk(m.avgProfitPerDay) : "–", yr: czk(year.avgProfitPerDay), av: czk(avgOf((m) => m.avgProfitPerDay)), k: "profit" },
   ];
   const isCurYear = settings.selectedYear === CURRENT_YEAR;
   return (

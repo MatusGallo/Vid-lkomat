@@ -1,7 +1,8 @@
 import type { Stats, View } from "../types";
 import { MONTHS, CURRENT_MONTH, CURRENT_YEAR } from "../constants";
 import { useSettings } from "../utils/SettingsContext";
-import { Truck, X, LayoutDashboard, CalendarDays, Plus } from "../icons";
+import { Truck, X, LayoutDashboard, CalendarDays, Plus, LogOut } from "../icons";
+import { logout } from "./PasswordGate";
 
 type Props = {
   view: View;
@@ -71,6 +72,10 @@ export function Sidebar({
           );
         })}
       </nav>
+
+      <button className="od-logout" onClick={logout} title="Odhlásit se">
+        <LogOut size={16} /> <span>Odhlásit</span>
+      </button>
     </aside>
   );
 }

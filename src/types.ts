@@ -9,14 +9,18 @@ export type MonthStat = {
   total: number;
   profit: number;
   count: number;
+  days: number;
   avgAmount: number;
   avgProfit: number;
+  avgProfitPerDay: number;
 };
 
 export type YearStat = {
   total: number;
   profit: number;
   count: number;
+  days: number;
+  avgProfitPerDay: number;
 };
 
 export type Stats = {

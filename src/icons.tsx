@@ -32,3 +32,4 @@ export const BadgeCheck = makeIcon('<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 
 export const Pencil = makeIcon('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>');
 export const Check = makeIcon('<path d="M20 6 9 17l-5-5"/>');
 export const AlertTriangle = makeIcon('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>');
+export const LogOut = makeIcon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>');

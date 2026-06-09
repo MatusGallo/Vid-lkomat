@@ -10,9 +10,10 @@ type Props = {
   change?: MoMChange;
   accent?: boolean;
   foot?: string;
+  extraFoot?: string;
 };
 
-export function Kpi({ label, value, unit, series = [], change, accent, foot }: Props) {
+export function Kpi({ label, value, unit, series = [], change, accent, foot, extraFoot }: Props) {
   const max = Math.max(...series, 1);
   return (
     <div className={"od-kpi" + (accent ? " is-accent" : "")}>
@@ -46,6 +47,7 @@ export function Kpi({ label, value, unit, series = [], change, accent, foot }: P
             <ArrowUpRight size={14} /> <em>málo dat pro srovnání</em>
           </span>
         )}
+        {extraFoot && <div className="od-kpi-extra mono">{extraFoot}</div>}
       </div>
     </div>
   );

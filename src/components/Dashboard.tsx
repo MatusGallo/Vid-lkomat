@@ -142,6 +142,7 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
           series={shown.map((m) => m.profit)}
           accent
           change={mom(shown, (m) => m.profit)}
+          extraFoot={year.days ? `Ø ${czk(year.avgProfitPerDay)} / den (${year.days} dní)` : undefined}
         />
         <Kpi
           label="Počet zásahů"
