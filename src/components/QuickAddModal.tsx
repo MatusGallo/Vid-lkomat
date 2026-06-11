@@ -112,9 +112,9 @@ export function QuickAddModal({ open, onClose, onAdd }: Props) {
               </div>
             )}
           </div>
-          <div className="od-field">
-            <label>Zisk {PROFIT_PCT} %</label>
-            <div className="od-preview mono">{preview ? czk(preview * PROFIT_RATE) : "–"}</div>
+          <div className="od-profit-readout">
+            <span className="od-profit-label">Zisk {PROFIT_PCT} %</span>
+            <span className="od-profit-val mono">{preview ? czk(preview * PROFIT_RATE) : "–"}</span>
           </div>
           <label className="od-check">
             <input

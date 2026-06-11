@@ -153,8 +153,8 @@ html, body { margin: 0; padding: 0; background: #141210; }
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 .od-kpis-solo .od-kpi-val em { -webkit-text-fill-color: var(--muted); }
-.od-kpis-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.od-kpis-bar-label { font-size: 12px; letter-spacing: .07em; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.od-kpis-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.od-kpis-bar-label { font-weight: 800; font-size: 18.5px; letter-spacing: -.02em; color: var(--txt); }
 .od-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px; }
 .od-kpi {
   position: relative; overflow: hidden;
@@ -384,6 +384,9 @@ html, body { margin: 0; padding: 0; background: #141210; }
 .od-modal-cancel:hover { background: var(--card); }
 .od-modal-del { background: var(--red); border: none; color: #fff; }
 .od-modal-del:hover { filter: brightness(1.08); }
+/* QuickAdd akce stejně velké jako FAB „Přidat zásah" (54px pill) */
+.od-modal-wide .od-modal-cancel,
+.od-modal-wide .od-modal-acts .od-add { height: 54px; border-radius: 999px; font-size: 15px; }
 
 /* FORM */
 .od-form { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
@@ -392,18 +395,29 @@ html, body { margin: 0; padding: 0; background: #141210; }
 .od-field label { font-size: 11px; letter-spacing: .06em; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
 .od-field input { background: var(--bg); border: 1px solid var(--line2); border-radius: 11px; color: var(--txt); padding: 0 14px; height: 46px; font-size: 16px; font-family: 'JetBrains Mono', monospace; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
 .od-field input[type="date"] {
-  display: block; text-align: left; line-height: 44px; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  text-align: left; line-height: normal; cursor: pointer;
   -webkit-appearance: none; appearance: none;
 }
-.od-field input[type="date"]::-webkit-date-and-time-value { text-align: left; line-height: 44px; }
+.od-field input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .od-field input[type="date"]::-webkit-datetime-edit {
-  padding: 0; height: 100%; display: inline-flex; align-items: center;
+  padding: 0; display: inline-flex; align-items: center; line-height: normal;
 }
 .od-field input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(.7); cursor: pointer; opacity: .7;
 }
 .od-field input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-soft); }
 .od-preview { height: 46px; display: flex; align-items: center; padding: 0 14px; background: var(--bg); border: 1px dashed var(--green); border-radius: 11px; color: var(--green); font-weight: 600; }
+/* Zisk v Rychlém zápisu = vypočtený výsledek, ne vstupní pole */
+.od-profit-readout {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; border-radius: 11px; background: var(--green-bg);
+}
+.od-profit-label {
+  font-size: 12px; letter-spacing: .06em; color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+}
+.od-profit-val { font-size: 16px; font-weight: 700; color: var(--green); }
 .od-input-wrap { position: relative; width: 100%; }
 .od-input-wrap input { padding-right: 42px; }
 .od-input-suffix {
@@ -445,7 +459,7 @@ html, body { margin: 0; padding: 0; background: #141210; }
 
 /* RESPONSIVE */
 .od-backdrop { display: none; }
-@media (max-width: 1000px) {
+@media (max-width: 1366px) {
   .od-topbar { display: none; }
   .od-shell { flex-direction: column; }
   .od-side { position: fixed; top: 0; left: 0; z-index: 60; transform: translateX(-100%); transition: transform .25s ease; box-shadow: 0 0 50px rgba(0, 0, 0, .6); width: 100vw; flex-basis: auto; height: 100dvh; padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); }
@@ -482,36 +496,13 @@ html, body { margin: 0; padding: 0; background: #141210; }
   .od-side .od-year-head { font-size: 12px; padding: 12px 10px; margin-top: 14px; }
   .od-side .od-year-chev { width: 18px; height: 18px; }
 
-  /* QuickAdd modal: fullscreen on mobile with sticky actions */
-  .od-modal-wrap:has(.od-modal-wide) { padding: 0; align-items: stretch; justify-content: stretch; }
-  .od-modal.od-modal-wide {
-    max-width: 100vw; width: 100vw; height: 100dvh; max-height: 100dvh;
-    border-radius: 0; border: none;
-    padding: 26px 20px 0;
-    display: flex; flex-direction: column;
-    overflow-x: hidden; overflow-y: auto;
-  }
-  .od-modal.od-modal-wide .od-field { max-width: 100%; }
-  .od-modal.od-modal-wide .od-field input { width: 100%; max-width: 100%; }
-  .od-modal.od-modal-wide .od-form.od-form-stack { margin-bottom: 24px; }
-  .od-modal.od-modal-wide .od-modal-acts {
-    position: sticky; bottom: 0; margin-top: auto;
-    margin-left: -20px; margin-right: -20px;
-    padding: 14px 20px calc(20px + env(safe-area-inset-bottom, 0px));
-    background: var(--panel);
-  }
-  .od-modal.od-modal-wide .od-modal-cancel,
-  .od-modal.od-modal-wide .od-modal-acts .od-add {
-    height: 52px; border-radius: 999px;
-  }
-  .od-modal.od-modal-wide .od-modal-head .od-row-btn { display: none; }
-  .od-kpis { grid-template-columns: 1fr 1fr; }
+  .od-kpis { grid-template-columns: repeat(3, 1fr); }
   .od-main { padding: 18px 18px 96px; }
   .od-fab {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     height: 54px; padding: 0 22px 0 18px; border-radius: 999px; border: none; cursor: pointer;
-    background: var(--orange); color: #1a0f06; z-index: 50;
+    background: linear-gradient(135deg, #ff8f4d, var(--orange)); color: #1a0f06; z-index: 50;
     font-family: inherit; font-weight: 700; font-size: 15px; letter-spacing: .01em;
     box-shadow: 0 6px 20px rgba(244, 113, 30, .45), 0 2px 8px rgba(0, 0, 0, .4);
     transition: transform .15s ease, filter .13s;
@@ -539,6 +530,44 @@ html, body { margin: 0; padding: 0; background: #141210; }
   .od-kpi { padding: 16px; }
   .od-main { padding: 16px 14px; }
   .od-head h1 { font-size: 26px; }
+
+  /* QuickAdd modal: celá obrazovka jen na telefonu (tablet má desktopový vystředěný modal) */
+  .od-modal-wrap:has(.od-modal-wide) { padding: 0; align-items: stretch; justify-content: stretch; }
+  .od-modal.od-modal-wide {
+    max-width: 100vw; width: 100vw; height: 100dvh; max-height: 100dvh;
+    border-radius: 0; border: none;
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 0;
+    display: flex; flex-direction: column;
+    overflow-x: hidden; overflow-y: auto;
+  }
+  .od-modal.od-modal-wide .od-field { max-width: 100%; }
+  .od-modal.od-modal-wide .od-field input { width: 100%; max-width: 100%; }
+  .od-modal.od-modal-wide .od-form.od-form-stack { margin-bottom: 24px; }
+  .od-modal.od-modal-wide .od-modal-acts {
+    position: sticky; bottom: 0; margin-top: auto;
+    margin-left: -20px; margin-right: -20px;
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+    background: var(--panel);
+  }
+  .od-modal.od-modal-wide .od-modal-head .od-row-btn { display: none; }
+
+  /* QuickAdd – pohodlnější ovládání na telefonu */
+  .od-modal.od-modal-wide .od-modal-head h3 { font-size: 23px; }
+  .od-modal.od-modal-wide .od-modal-sub { font-size: 13.5px; margin-bottom: 22px; }
+  .od-modal.od-modal-wide .od-form.od-form-stack { gap: 18px; }
+  .od-modal.od-modal-wide .od-field { gap: 9px; }
+  .od-modal.od-modal-wide .od-field label { font-size: 12.5px; }
+  /* Vstupní pole (datum, částka) stejně velká */
+  .od-modal.od-modal-wide .od-field input { height: 54px; font-size: 17px; border-radius: 14px; }
+  .od-modal.od-modal-wide .od-profit-readout { padding: 14px; border-radius: 14px; }
+  .od-modal.od-modal-wide .od-profit-label { font-size: 13px; }
+  .od-modal.od-modal-wide .od-profit-val { font-size: 17px; }
+  .od-modal.od-modal-wide .od-check { font-size: 14px; padding: 8px 2px; }
+  .od-modal.od-modal-wide .od-check-box { width: 24px; height: 24px; }
+  .od-modal.od-modal-wide .od-modal-cancel,
+  .od-modal.od-modal-wide .od-modal-acts .od-add {
+    height: 54px; border-radius: 999px; font-size: 16px;
+  }
 
   /* Roční souhrn – mobilní redesign: přepínač Měsíce / Rok / Průměr.
      Zobrazí se vždy jen vybraná skupina sloupců (+ Metrika). */
