@@ -1,6 +1,7 @@
 import type { Entry } from "../types";
 import { MONTHS } from "../constants";
 import { czk, dateLabel } from "../utils/format";
+import { periodOf } from "../utils/stats";
 import { AlertTriangle } from "../icons";
 
 type Props = {
@@ -19,7 +20,7 @@ export function ConfirmModal({ entry, onConfirm, onCancel }: Props) {
         </div>
         <h3>Smazat zásah?</h3>
         <p>
-          {dateLabel(entry.date)} · {MONTHS[entry.m]} · <b>{czk(entry.amount)}</b>
+          {dateLabel(entry.date)} · {MONTHS[periodOf(entry.date).m]} · <b>{czk(entry.amount)}</b>
           <br />
           Tuto akci nelze vrátit zpět.
         </p>

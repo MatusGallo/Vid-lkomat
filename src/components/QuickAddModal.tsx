@@ -74,23 +74,37 @@ export function QuickAddModal({ open, onClose, onAdd }: Props) {
         <div className="od-form od-form-stack">
           <div className="od-field">
             <label>Datum</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch {
+                  /* showPicker není podporováno / už je otevřeno */
+                }
+              }}
+            />
           </div>
           <div className="od-field">
-            <label>Částka (Kč)</label>
-            <input
-              ref={inputRef}
-              type="text"
-              inputMode="decimal"
-              placeholder="např. 3 500"
-              value={amount}
-              aria-invalid={!!err}
-              onChange={(e) => {
-                setAmount(groupAmount(e.target.value));
-                if (err) setErr("");
-              }}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-            />
+            <label>Částka</label>
+            <div className="od-input-wrap">
+              <input
+                ref={inputRef}
+                type="text"
+                inputMode="decimal"
+                placeholder="např. 3 500"
+                value={amount}
+                aria-invalid={!!err}
+                onChange={(e) => {
+                  setAmount(groupAmount(e.target.value));
+                  if (err) setErr("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+              />
+              <span className="od-input-suffix">Kč</span>
+            </div>
             {err && (
               <div className="od-err-box">
                 <span className="od-err-ico" aria-hidden="true">!</span>

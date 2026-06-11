@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Truck } from "../icons";
+import { Logo } from "../icons";
 
 const HASH = "7e11bc65a7852d1c5833549ad3a1bbc743deac167c2f18ae11b7b2784dd8d00d";
 export const AUTH_KEY = "vydelkomat_auth_v1";
@@ -52,7 +52,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
   return (
     <div className="od-gate">
       <div className="od-gate-card">
-        <div className="od-gate-ico"><Truck size={32} /></div>
+        <div className="od-gate-ico"><Logo size={60} /></div>
         <h1>Vydělkomat</h1>
         <p>Zadejte heslo pro vstup do aplikace.</p>
         <input

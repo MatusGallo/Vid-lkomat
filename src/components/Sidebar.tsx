@@ -1,30 +1,39 @@
-import type { Stats, View } from "../types";
+import { useState } from "react";
+import type { MonthStat, View } from "../types";
 import { MONTHS, CURRENT_MONTH, CURRENT_YEAR } from "../constants";
 import { useSettings } from "../utils/SettingsContext";
-import { Truck, X, LayoutDashboard, CalendarDays, Plus, LogOut } from "../icons";
+import { Logo, X, LayoutDashboard, CalendarDays, Plus, LogOut, ChevronDown } from "../icons";
 import { logout } from "./PasswordGate";
+
+type YearGroup = { year: number; months: MonthStat[]; activeMonths: number[] };
 
 type Props = {
   view: View;
-  go: (v: View) => void;
-  stats: Stats;
+  go: (v: View, year?: number) => void;
   open: boolean;
   onClose: () => void;
-  years: number[];
-  activeMonths: number[];
+  yearGroups: YearGroup[];
   onQuickAdd: () => void;
 };
 
 export function Sidebar({
-  view, go, stats, open, onClose,
-  years, activeMonths, onQuickAdd,
+  view, go, open, onClose,
+  yearGroups, onQuickAdd,
 }: Props) {
-  const { settings, setSelectedYear } = useSettings();
+  const { settings } = useSettings();
+  const [openYears, setOpenYears] = useState<Set<number>>(() => new Set([CURRENT_YEAR]));
+  const toggleYear = (y: number) =>
+    setOpenYears((prev) => {
+      const next = new Set(prev);
+      if (next.has(y)) next.delete(y);
+      else next.add(y);
+      return next;
+    });
 
   return (
     <aside className={"od-side" + (open ? " is-open" : "")}>
       <div className="od-brand">
-        <Truck size={22} className="od-brand-ico" />
+        <Logo size={30} className="od-brand-ico" />
         <span className="od-brand-name">Vydělkomat</span>
         <button className="od-side-logout" onClick={logout} title="Odhlásit se" aria-label="Odhlásit se">
           <LogOut size={18} />
@@ -39,39 +48,45 @@ export function Sidebar({
       </button>
 
       <nav className="od-nav">
-        <div className="od-nav-label">
-          <span>Přehled</span>
-          <select
-            className="od-year-sel"
-            value={settings.selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
         <button
           className={"od-nav-item" + (view === "dashboard" ? " is-active" : "")}
           onClick={() => go("dashboard")}
         >
           <LayoutDashboard size={18} /> <span>Souhrn {settings.selectedYear}</span>
         </button>
-        <div className="od-nav-label">Měsíce</div>
-        {activeMonths.map((i) => {
-          const c = stats.months[i].count;
+        {yearGroups.map((g) => {
+          const isOpen = openYears.has(g.year);
           return (
-            <button
-              key={i}
-              className={"od-nav-item" + (view === i ? " is-active" : "")}
-              onClick={() => go(i)}
-            >
-              <CalendarDays size={18} /> <span>{MONTHS[i]}</span>
-              {c > 0 && <span className="od-nav-badge">{c}</span>}
-              {i === CURRENT_MONTH && settings.selectedYear === CURRENT_YEAR && (
-                <span className="od-nav-dot" title="Aktuální měsíc" />
+            <div className="od-year-group" key={g.year}>
+              <button
+                className={"od-year-head" + (isOpen ? " is-open" : "")}
+                onClick={() => toggleYear(g.year)}
+                aria-expanded={isOpen}
+              >
+                <ChevronDown size={16} className="od-year-chev" />
+                <span>Rok {g.year}</span>
+              </button>
+              {isOpen && (
+                <div className="od-year-body">
+                  {g.activeMonths.map((i) => {
+                    const c = g.months[i].count;
+                    return (
+                      <button
+                        key={i}
+                        className={"od-nav-item" + (view === i && settings.selectedYear === g.year ? " is-active" : "")}
+                        onClick={() => go(i, g.year)}
+                      >
+                        <CalendarDays size={18} /> <span>{MONTHS[i]}</span>
+                        {c > 0 && <span className="od-nav-badge">{c}</span>}
+                        {i === CURRENT_MONTH && g.year === CURRENT_YEAR && (
+                          <span className="od-nav-dot" title="Aktuální měsíc" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-            </button>
+            </div>
           );
         })}
       </nav>

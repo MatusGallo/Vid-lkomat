@@ -1,10 +1,27 @@
 import type { Entry, Stats, MonthStat, MoMChange } from "../types";
-import { MONTHS, CURRENT_YEAR, CURRENT_MONTH, PROFIT_RATE } from "../constants";
+import { CURRENT_YEAR, CURRENT_MONTH, PROFIT_RATE } from "../constants";
+
+// Výplatní období zápisu: den ≥ 21 patří už do následujícího měsíce.
+// Vrací { y, m } – rok a 0-based index měsíce, podle kterého se zápis počítá.
+export function periodOf(iso: string): { y: number; m: number } {
+  const y = parseInt(iso.slice(0, 4), 10);
+  const mo = parseInt(iso.slice(5, 7), 10) - 1;
+  const d = parseInt(iso.slice(8, 10), 10);
+  if (d >= 21) {
+    const nm = mo + 1;
+    return nm > 11 ? { y: y + 1, m: 0 } : { y, m: nm };
+  }
+  return { y, m: mo };
+}
 
 export function computeStats(entries: Entry[], year: number): Stats {
-  const yearEntries = entries.filter((e) => yearOf(e.date) === year);
-  const months: MonthStat[] = MONTHS.map((_, i) => {
-    const list = yearEntries.filter((e) => e.m === i);
+  // Jeden průchod: každý zápis roztřídíme do měsíce svého výplatního období.
+  const buckets: Entry[][] = Array.from({ length: 12 }, () => []);
+  for (const e of entries) {
+    const p = periodOf(e.date);
+    if (p.y === year) buckets[p.m].push(e);
+  }
+  const months: MonthStat[] = buckets.map((list) => {
     const total = list.reduce((s, e) => s + e.amount, 0);
     const count = list.length;
     const profit = total * PROFIT_RATE;
@@ -21,7 +38,7 @@ export function computeStats(entries: Entry[], year: number): Stats {
   });
   const total = months.reduce((s, m) => s + m.total, 0);
   const count = months.reduce((s, m) => s + m.count, 0);
-  const days = new Set(yearEntries.map((e) => e.date)).size;
+  const days = new Set(buckets.flatMap((list) => list.map((e) => e.date))).size;
   const profit = total * PROFIT_RATE;
   return {
     months,
@@ -29,13 +46,9 @@ export function computeStats(entries: Entry[], year: number): Stats {
   };
 }
 
-export function yearOf(iso: string): number {
-  return parseInt(iso.slice(0, 4), 10);
-}
-
 export function availableYears(entries: Entry[]): number[] {
   const set = new Set<number>();
-  entries.forEach((e) => set.add(yearOf(e.date)));
+  entries.forEach((e) => set.add(periodOf(e.date).y));
   set.add(CURRENT_YEAR);
   return Array.from(set).sort((a, b) => b - a);
 }
@@ -81,15 +94,6 @@ export function monthChange(months: MonthStat[], mi: number, sel: (m: MonthStat)
   const prevV = sel(prev);
   if (!prevV) return null;
   return { pct: ((cur - prevV) / prevV) * 100, up: cur >= prevV };
-}
-
-export function mom(shown: MonthStat[], sel: (m: MonthStat) => number): MoMChange {
-  const wd = shown.filter((m) => m.count > 0);
-  if (wd.length < 2) return null;
-  const last = sel(wd[wd.length - 1]);
-  const prev = sel(wd[wd.length - 2]);
-  if (!prev) return null;
-  return { pct: ((last - prev) / prev) * 100, up: last >= prev };
 }
 
 export function niceCeil(n: number): number {

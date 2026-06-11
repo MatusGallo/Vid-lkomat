@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { Entry, View } from "./types";
 import { loadEntries, saveEntries } from "./utils/storage";
 import { apiList, apiUpsert, apiDelete } from "./utils/api";
-import { activeMonthsOf, availableYears, computeStats } from "./utils/stats";
+import { activeMonthsOf, availableYears, computeStats, periodOf } from "./utils/stats";
+import { CURRENT_MONTH, CURRENT_YEAR } from "./constants";
 import { uid } from "./utils/format";
 import { useSettings } from "./utils/SettingsContext";
 import { Sidebar } from "./components/Sidebar";
@@ -10,10 +11,10 @@ import { Dashboard } from "./components/Dashboard";
 import { MonthView } from "./components/MonthView";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { QuickAddModal } from "./components/QuickAddModal";
-import { Truck, Menu, Plus } from "./icons";
+import { Logo, Menu, Plus } from "./icons";
 
 export default function App() {
-  const { settings } = useSettings();
+  const { settings, setSelectedYear } = useSettings();
   const [entries, setEntries] = useState<Entry[]>(loadEntries);
   const [view, setView] = useState<View>("dashboard");
   const [navOpen, setNavOpen] = useState(false);
@@ -74,12 +75,33 @@ export default function App() {
     () => activeMonthsOf(stats.months, settings.selectedYear),
     [stats.months, settings.selectedYear],
   );
+  // Souhrn měsíců pro každý rok zvlášť – sidebar je zobrazuje jako rozbalovací sekce.
+  // U aktuálního roku doplníme i zbývající měsíce do konce roku (i bez záznamů).
+  const yearGroups = useMemo(
+    () =>
+      years.map((y) => {
+        const s = computeStats(entries, y);
+        const months = new Set(activeMonthsOf(s.months, y));
+        if (y === CURRENT_YEAR) {
+          for (let i = CURRENT_MONTH; i <= 11; i++) months.add(i);
+        }
+        return {
+          year: y,
+          months: s.months,
+          activeMonths: Array.from(months).sort((a, b) => a - b),
+        };
+      }),
+    [entries, years],
+  );
 
   useEffect(() => {
-    if (typeof view === "number" && !activeMonths.includes(view)) {
+    // Měsíce do konce aktuálního roku jsou navigovatelné i bez záznamů (viz sidebar).
+    const isFutureCurrentYear =
+      settings.selectedYear === CURRENT_YEAR && typeof view === "number" && view >= CURRENT_MONTH;
+    if (typeof view === "number" && !activeMonths.includes(view) && !isFutureCurrentYear) {
       setView("dashboard");
     }
-  }, [activeMonths, view]);
+  }, [activeMonths, view, settings.selectedYear]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -100,7 +122,8 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const go = (v: View) => {
+  const go = (v: View, year?: number) => {
+    if (year !== undefined && year !== settings.selectedYear) setSelectedYear(year);
     setView(v);
     setNavOpen(false);
   };
@@ -112,7 +135,7 @@ export default function App() {
           <Menu size={20} />
         </button>
         <div className="od-topbar-brand">
-          <Truck size={18} /> Vydělkomat
+          <Logo size={24} /> Vydělkomat
         </div>
       </div>
 
@@ -121,11 +144,9 @@ export default function App() {
         <Sidebar
           view={view}
           go={go}
-          stats={stats}
           open={navOpen}
           onClose={() => setNavOpen(false)}
-          years={years}
-          activeMonths={activeMonths}
+          yearGroups={yearGroups}
           onQuickAdd={() => setQuickOpen(true)}
         />
         <main className="od-main">
@@ -140,11 +161,10 @@ export default function App() {
           ) : (
             <MonthView
               m={view}
-              entries={entries.filter(
-                (e) =>
-                  e.m === view &&
-                  parseInt(e.date.slice(0, 4), 10) === settings.selectedYear,
-              )}
+              entries={entries.filter((e) => {
+                const p = periodOf(e.date);
+                return p.m === view && p.y === settings.selectedYear;
+              })}
               monthStat={stats.months[view]}
               onAdd={addEntry}
               onEdit={updateEntry}

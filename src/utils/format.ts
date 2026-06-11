@@ -29,6 +29,12 @@ export const groupAmount = (str: string): string => {
   return parts.length > 1 ? intp + "," + parts[1].slice(0, 2) : intp;
 };
 
+export const weekdayLabel = (iso: string): string =>
+  new Intl.DateTimeFormat("cs-CZ", { weekday: "long" }).format(new Date(iso + "T00:00:00"));
+
+export const plural = (n: number, one: string, few: string, many: string): string =>
+  n === 1 ? one : n >= 2 && n <= 4 ? few : many;
+
 export const todayISO = (): string => {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");

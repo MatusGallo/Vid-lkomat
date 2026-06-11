@@ -41,9 +41,12 @@ export function Kpi({ label, value, unit, series = [], nowIndex, change, changeL
         {foot ? (
           <span className="flat">{foot}</span>
         ) : change ? (
-          <span className={change.up ? "up" : "down"}>
-            {change.up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}{" "}
-            {num1(Math.abs(change.pct))} % <em>{changeLabel}</em>
+          <span className="od-kpi-change">
+            <span className={"od-chip " + (change.up ? "up" : "down")}>
+              {change.up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+              {num1(Math.abs(change.pct))} %
+            </span>
+            <em>{changeLabel}</em>
           </span>
         ) : (
           <span className="flat">

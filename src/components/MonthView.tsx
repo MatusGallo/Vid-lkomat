@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { Entry, MonthStat } from "../types";
 import { MONTHS, CURRENT_MONTH, CURRENT_YEAR, PROFIT_RATE, PROFIT_PCT } from "../constants";
-import { czk, dateLabel, groupAmount, parseAmount, todayISO } from "../utils/format";
+import { czk, dateLabel, groupAmount, parseAmount, todayISO, weekdayLabel, plural } from "../utils/format";
 import { useSettings } from "../utils/SettingsContext";
 import { useRowEdit } from "../hooks/useRowEdit";
 import { Truck, Plus } from "../icons";
@@ -31,7 +31,14 @@ export function MonthView({ m, entries, monthStat, onAdd, onEdit, onRequestDelet
   const ed = useRowEdit(onEdit);
   const sorted = entries
     .slice()
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  // Seskup zásahy po dnech (nejbližší/nejnovější den první) – jeden den = jedna tabulka se souhrnem.
+  const byDay: [string, Entry[]][] = [];
+  sorted.forEach((e) => {
+    const last = byDay[byDay.length - 1];
+    if (last && last[0] === e.date) last[1].push(e);
+    else byDay.push([e.date, [e]]);
+  });
   const previewAmount = parseAmount(amount);
 
   const submit = () => {
@@ -60,7 +67,7 @@ export function MonthView({ m, entries, monthStat, onAdd, onEdit, onRequestDelet
           foot={"Ø " + czk(monthStat.avgAmount) + " / zásah"}
         />
         <Kpi
-          label={`Čistý zisk ${PROFIT_PCT} %`}
+          label="Čistý zisk"
           value={czk(monthStat.profit)}
           series={sorted.map((e) => e.amount * PROFIT_RATE)}
           accent
@@ -108,56 +115,69 @@ export function MonthView({ m, entries, monthStat, onAdd, onEdit, onRequestDelet
         {err && <p className="od-err">{err}</p>}
       </section>
 
-      <section className="od-panel">
+      <section className="od-records">
         <div className="od-panel-head">
-          <div className="od-panel-title">Záznamy · {monthStat.count} zásahů</div>
+          <div className="od-panel-title">
+            Záznamy · {monthStat.count} {plural(monthStat.count, "zásah", "zásahy", "zásahů")}
+            {byDay.length > 0 && ` · ${byDay.length} ${plural(byDay.length, "den", "dny", "dní")}`}
+          </div>
         </div>
         {sorted.length === 0 ? (
           <div className="od-empty">
-            <Truck size={34} /> Zatím žádné zásahy v měsíci {MONTHS[m].toLowerCase()}.
+            <Truck size={34} />
+            <span>Zatím žádné zásahy v měsíci {MONTHS[m].toLowerCase()}.</span>
           </div>
         ) : (
-          <div className="od-table-wrap">
-            <table className="od-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>DATUM</th>
-                  <th className="r">ČÁSTKA</th>
-                  <th className="r">ZISK {PROFIT_PCT} %</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((e, i) => {
-                  const editing = ed.editId === e.id;
-                  const prev = editing ? parseAmount(ed.editVal) || 0 : e.amount;
-                  return (
-                    <tr key={e.id}>
-                      <td className="faint mono">{i + 1}</td>
-                      <td className="mono">
-                        {editing ? <DateInput ed={ed} /> : dateLabel(e.date)}
-                      </td>
-                      <td className="r mono strong">
-                        {editing ? <AmountInput ed={ed} /> : czk(e.amount)}
-                      </td>
-                      <td className="r mono profit">{czk(prev * PROFIT_RATE)}</td>
-                      <td className="r">
-                        <RowActions e={e} ed={ed} onRequestDelete={onRequestDelete} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan={2}>Celkem</td>
-                  <td className="r mono strong">{czk(monthStat.total)}</td>
-                  <td className="r mono profit">{czk(monthStat.profit)}</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
+          <div className="od-days">
+            {byDay.map(([day, items]) => {
+              const dayTotal = items.reduce((s, e) => s + e.amount, 0);
+              return (
+                <div className="od-day" key={day}>
+                  <div className="od-day-head">
+                    <span className="od-day-date mono">{dateLabel(day)}</span>
+                    <span className="od-day-wd">{weekdayLabel(day)}</span>
+                    <span className="od-day-count">
+                      {items.length} {plural(items.length, "zásah", "zásahy", "zásahů")}
+                    </span>
+                    <span className="od-day-sum mono">{czk(dayTotal)}</span>
+                  </div>
+                  <div className="od-table-wrap">
+                    <table className="od-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Datum</th>
+                          <th className="r">Částka</th>
+                          <th className="r">Zisk {PROFIT_PCT} %</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((e, i) => {
+                          const editing = ed.editId === e.id;
+                          const prev = editing ? parseAmount(ed.editVal) || 0 : e.amount;
+                          return (
+                            <tr key={e.id}>
+                              <td className="faint mono">{i + 1}</td>
+                              <td className="mono">
+                                {editing ? <DateInput ed={ed} /> : dateLabel(e.date)}
+                              </td>
+                              <td className="r mono strong">
+                                {editing ? <AmountInput ed={ed} /> : czk(e.amount)}
+                              </td>
+                              <td className="r mono profit">{czk(prev * PROFIT_RATE)}</td>
+                              <td className="r">
+                                <RowActions e={e} ed={ed} onRequestDelete={onRequestDelete} />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

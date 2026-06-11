@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import type { Entry, Stats, TrendMode, TrendPoint } from "../types";
-import { MONTHS, MONTHS_SHORT, CURRENT_MONTH, CURRENT_YEAR, PROFIT_RATE, PROFIT_PCT } from "../constants";
+import { MONTHS, MONTHS_SHORT, CURRENT_MONTH, CURRENT_YEAR, PROFIT_RATE, PROFIT_PCT, VAT_RATE, VAT_PCT } from "../constants";
 import { czk, dateLabel, parseAmount, todayISO } from "../utils/format";
-import { dayStat, monthChange, yearOf } from "../utils/stats";
+import { dayStat, monthChange, periodOf } from "../utils/stats";
 import { useSettings } from "../utils/SettingsContext";
 import { useRowEdit } from "../hooks/useRowEdit";
 import { Truck, BadgeCheck } from "../icons";
@@ -10,6 +10,7 @@ import { Kpi } from "./Kpi";
 import { LineTrend } from "./LineTrend";
 import { SummaryTable } from "./SummaryTable";
 import { AmountInput, DateInput, RowActions } from "./RowActions";
+import { Dropdown } from "./Dropdown";
 
 type Props = {
   stats: Stats;
@@ -26,36 +27,29 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
   const shown = activeMonths.map((i) => months[i]);
   const active = shown.filter((m) => m.count > 0).length;
   const ed = useRowEdit(onEdit);
-  const yearEntries = entries.filter((e) => yearOf(e.date) === settings.selectedYear);
-  const [filter, setFilter] = useState("");
-  const filtered = useMemo(() => {
-    const sorted = yearEntries
-      .slice()
-      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-    if (!filter.trim()) return sorted;
-    const q = filter.trim().toLowerCase();
-    return sorted.filter((e) => {
-      const amount = String(Math.round(e.amount));
-      const month = MONTHS[e.m].toLowerCase();
-      const day = dateLabel(e.date).toLowerCase();
-      return (
-        e.date.includes(q) ||
-        amount.includes(q) ||
-        month.includes(q) ||
-        day.includes(q)
-      );
-    });
-  }, [yearEntries, filter]);
+  const yearEntries = entries.filter((e) => periodOf(e.date).y === settings.selectedYear);
+  const filtered = useMemo(
+    () =>
+      yearEntries
+        .slice()
+        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
+    [yearEntries],
+  );
   const visible = filtered.slice(0, 20);
 
   const day = useMemo(() => dayStat(entries, todayISO()), [entries]);
 
+  // V dropdownu: měsíce se záznamy + (u aktuálního roku) aktuální a budoucí měsíce.
+  // Minulé prázdné měsíce vynecháme – nikdy v nich žádný zápis nebude.
+  const monthOptions = (() => {
+    const set = new Set<number>(activeMonths);
+    if (settings.selectedYear === CURRENT_YEAR) {
+      for (let i = CURRENT_MONTH; i <= 11; i++) set.add(i);
+    }
+    return Array.from(set).sort((a, b) => a - b);
+  })();
   const [selMonth, setSelMonth] = useState(CURRENT_MONTH);
-  const monthInView = activeMonths.includes(selMonth)
-    ? selMonth
-    : settings.selectedYear === CURRENT_YEAR && activeMonths.includes(CURRENT_MONTH)
-      ? CURRENT_MONTH
-      : activeMonths[activeMonths.length - 1];
+  const monthInView = selMonth >= 0 && selMonth <= 11 ? selMonth : CURRENT_MONTH;
   const month = months[monthInView];
   const monthPos = activeMonths.indexOf(monthInView);
 
@@ -106,7 +100,7 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
     }
     const byYear = new Map<string, { total: number; count: number }>();
     entries.forEach((e) => {
-      const y = e.date.slice(0, 4);
+      const y = String(periodOf(e.date).y);
       const cur = byYear.get(y) || { total: 0, count: 0 };
       cur.total += e.amount;
       cur.count += 1;
@@ -125,14 +119,9 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
       }));
   }, [trendMode, entries, yearEntries, months, activeMonths, settings.selectedYear]);
 
-  const trendTotals = useMemo(() => {
-    const total = trendPoints.reduce((s, p) => s + p.total, 0);
-    return total;
-  }, [trendPoints]);
-
   const hasTrendData = trendPoints.some((p) => p.count > 0);
   const trendTitle =
-    trendMode === "days" ? `Vývoj po dnech${trendPoints.length ? ` · ${trendPoints.length} dní` : ""}`
+    trendMode === "days" ? "Vývoj po dnech"
     : trendMode === "years" ? "Vývoj po letech"
     : `Vývoj v roce ${settings.selectedYear}`;
 
@@ -144,29 +133,27 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
         <Kpi
           label="Dnešní zisk"
           value={czk(day.total * PROFIT_RATE)}
-          series={day.series.map((v) => v * PROFIT_RATE)}
           accent
           change={day.total > 0 ? day.change : undefined}
           changeLabel="vs. předchozí den"
-          extraFoot={day.prevDate ? `Předchozí den ${dateLabel(day.prevDate)}: ${czk(day.prev * PROFIT_RATE)}` : undefined}
+          extraFoot={day.prevDate ? `Předchozí den: ${czk(day.prev * PROFIT_RATE)}` : undefined}
           foot={day.total === 0 ? "zatím dnes žádný zápis" : undefined}
         />
       </div>
 
       <div className="od-kpis-bar">
         <span className="od-kpis-bar-label">Přehled za měsíc</span>
-        <select
-          className="od-year-sel od-month-sel"
+        <Dropdown
+          ariaLabel="Vyber měsíc"
           value={monthInView}
-          onChange={(e) => setSelMonth(parseInt(e.target.value, 10))}
-        >
-          {activeMonths.map((i) => (
-            <option key={i} value={i}>
-              {MONTHS[i]} {settings.selectedYear}
-              {i === CURRENT_MONTH && settings.selectedYear === CURRENT_YEAR ? " — aktuální" : ""}
-            </option>
-          ))}
-        </select>
+          onChange={setSelMonth}
+          options={monthOptions.map((i) => ({
+            value: i,
+            label:
+              `${MONTHS[i]} ${settings.selectedYear}` +
+              (i === CURRENT_MONTH && settings.selectedYear === CURRENT_YEAR ? " - aktuální" : ""),
+          }))}
+        />
       </div>
 
       <div className="od-kpis">
@@ -176,9 +163,10 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
           series={shown.map((m) => m.total)}
           nowIndex={monthPos}
           change={monthChange(months, monthInView, (m) => m.total)}
+          extraFoot={`Bez DPH: ${czk(month.total / (1 + VAT_RATE))} (DPH ${VAT_PCT} %)`}
         />
         <Kpi
-          label={`Čistý zisk ${PROFIT_PCT} %`}
+          label="Čistý zisk"
           value={czk(month.profit)}
           series={shown.map((m) => m.profit)}
           nowIndex={monthPos}
@@ -198,9 +186,7 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
 
       <section className="od-panel">
         <div className="od-panel-head">
-          <div className="od-panel-title">
-            {trendTitle} <span className="od-panel-total">{czk(trendTotals)}</span>
-          </div>
+          <div className="od-panel-title">{trendTitle}</div>
           <div className="od-panel-tools">
             <div className="od-switch" role="tablist" aria-label="Režim grafu">
               {(["days", "months", "years"] as TrendMode[]).map((m) => (
@@ -215,17 +201,20 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
                 </button>
               ))}
             </div>
-            <div className="od-legend">
-              <span className="od-leg"><span className="dot o" /> Obrat</span>
-              <span className="od-leg"><span className="dot n" /> Zisk {PROFIT_PCT} %</span>
-            </div>
           </div>
         </div>
         {hasTrendData ? (
-          <LineTrend points={trendPoints} />
+          <>
+            <LineTrend points={trendPoints} />
+            <div className="od-legend od-legend-below">
+              <span className="od-leg"><span className="dot o" /> Obrat</span>
+              <span className="od-leg"><span className="dot n" /> Zisk</span>
+            </div>
+          </>
         ) : (
           <div className="od-empty">
-            <Truck size={34} /> Zatím žádná data – přidej zásahy (stiskni <b>N</b>).
+            <Truck size={34} />
+            <span>Zatím žádná data – přidej zásahy (stiskni <b>N</b>).</span>
           </div>
         )}
       </section>
@@ -234,35 +223,29 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
         <div className="od-panel-head"><div className="od-panel-title">Roční souhrn</div></div>
         <SummaryTable shown={shown} year={year} active={active} activeMonths={activeMonths} />
         <p className="od-note">
-          <b>ROK</b> = součet (u průměrů celkový průměr). <b>Ø měs.</b> = průměr z měsíců se záznamy ({active} z {activeMonths.length}).
+          <b>Rok</b> = součet (u průměrů celkový průměr). <b>Ø měs.</b> = průměr z měsíců se záznamy ({active} z {activeMonths.length}).
         </p>
       </section>
 
       <section className="od-panel">
         <div className="od-panel-head">
-          <div className="od-panel-title">Záznamy {settings.selectedYear} · {filtered.length}</div>
-          <input
-            type="search"
-            className="od-search"
-            placeholder="Hledat (datum, částka, měsíc)…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
+          <div className="od-panel-title">Záznamy</div>
         </div>
         {visible.length === 0 ? (
           <div className="od-empty">
-            <Truck size={34} /> {filter ? "Žádný záznam neodpovídá filtru." : "Zatím žádné zásahy. Stiskni N pro rychlý zápis."}
+            <Truck size={34} />
+            <span>Zatím žádné zásahy. Stiskni <b>N</b> pro rychlý zápis.</span>
           </div>
         ) : (
           <div className="od-table-wrap">
             <table className="od-table">
               <thead>
                 <tr>
-                  <th>DATUM</th>
-                  <th>MĚSÍC</th>
-                  <th className="r">ČÁSTKA</th>
-                  <th className="r">ZISK {PROFIT_PCT} %</th>
-                  <th>STAV</th>
+                  <th>Datum</th>
+                  <th>Měsíc</th>
+                  <th className="r">Částka</th>
+                  <th className="r">Zisk {PROFIT_PCT} %</th>
+                  <th>Stav</th>
                   <th></th>
                 </tr>
               </thead>
@@ -270,15 +253,13 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
                 {visible.map((e) => {
                   const editing = ed.editId === e.id;
                   const prev = editing ? parseAmount(ed.editVal) || 0 : e.amount;
-                  const monthIdx = editing
-                    ? parseInt(ed.editDate.slice(5, 7), 10) - 1
-                    : e.m;
+                  const monthIdx = editing ? periodOf(ed.editDate).m : periodOf(e.date).m;
                   return (
                     <tr key={e.id}>
                       <td className="mono">
                         {editing ? <DateInput ed={ed} /> : dateLabel(e.date)}
                       </td>
-                      <td>{MONTHS[Number.isFinite(monthIdx) ? monthIdx : e.m]}</td>
+                      <td>{MONTHS[Number.isFinite(monthIdx) ? monthIdx : periodOf(e.date).m]}</td>
                       <td className="r mono strong">
                         {editing ? <AmountInput ed={ed} /> : czk(e.amount)}
                       </td>
@@ -299,7 +280,7 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
           </div>
         )}
         {filtered.length > visible.length && (
-          <p className="od-note">Zobrazeno {visible.length} z {filtered.length}. Zužte filtr pro nalezení dalších.</p>
+          <p className="od-note">Zobrazeno {visible.length} z {filtered.length} záznamů.</p>
         )}
       </section>
     </div>
