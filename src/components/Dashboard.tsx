@@ -76,27 +76,21 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
         byDate.set(e.date, cur);
       });
       const today = todayISO();
-      const firstDate = yearEntries.reduce(
-        (min, e) => (e.date < min ? e.date : min),
-        yearEntries[0].date,
-      );
-      const endISO = settings.selectedYear === CURRENT_YEAR ? today : settings.selectedYear + "-12-31";
-      const start = new Date(firstDate + "T00:00:00");
-      const end = new Date(endISO + "T00:00:00");
-      const points: TrendPoint[] = [];
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const iso = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-        const v = byDate.get(iso) || { total: 0, count: 0 };
-        points.push({
-          label: dateLabel(iso),
-          fullLabel: iso,
-          total: v.total,
-          profit: v.total * PROFIT_RATE,
-          count: v.count,
-          isCurrent: iso === today,
+      // Jen pracovní dny = dny, kdy existuje aspoň jeden záznam (žádné mezery
+      // za prázdné kalendářní dny). Seřazené chronologicky.
+      return Array.from(byDate.keys())
+        .sort()
+        .map((iso) => {
+          const v = byDate.get(iso)!;
+          return {
+            label: dateLabel(iso),
+            fullLabel: iso,
+            total: v.total,
+            profit: v.total * PROFIT_RATE,
+            count: v.count,
+            isCurrent: iso === today,
+          };
         });
-      }
-      return points;
     }
     const byYear = new Map<string, { total: number; count: number }>();
     entries.forEach((e) => {
