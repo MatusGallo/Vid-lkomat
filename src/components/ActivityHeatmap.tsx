@@ -10,11 +10,12 @@ type Cell = { iso: string; count: number; level: number; inYear: boolean };
 
 const WEEKDAY_LABELS = ["Po", "", "St", "", "Pá", "", ""];
 
-// Počet zásahů → úroveň 0–4 (0 = žádný). Stupnice je dynamická podle nejvyššího
-// denního počtu v roce (kvartily z maxima), aby byly rozdíly vidět i když má
-// většina dnů podobně vysoký počet.
+// Počet zásahů → úroveň 0–4 (0 = žádný). Stupnice je dynamická: nejsvětlejší
+// úroveň (4) patří VÝHRADNĚ dnům s nejvyšším denním počtem v roce. Ostatní dny
+// se rozloží do úrovní 1–3 podle poměru k maximu. Když maximum vzroste (nový
+// rekordní den), dosavadní „špičkové" dny barvu automaticky sníží.
 const levelOf = (count: number, max: number): number =>
-  count <= 0 ? 0 : max <= 1 ? 4 : Math.max(1, Math.min(4, Math.ceil((count / max) * 4)));
+  count <= 0 ? 0 : count >= max ? 4 : Math.max(1, Math.min(3, Math.ceil((count / max) * 3)));
 
 // Monday-based index (Po = 0 … Ne = 6).
 const mondayIdx = (d: Date): number => (d.getDay() + 6) % 7;
