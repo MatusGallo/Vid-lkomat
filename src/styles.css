@@ -654,7 +654,7 @@ html, body { margin: 0; padding: 0; background: #141210; }
 .ah-l4 { background: #74efa8; }
 .ah-grid .ah-cell:not(.ah-empty) { cursor: default; transition: filter .12s; }
 .ah-grid .ah-cell:not(.ah-empty):hover { filter: brightness(1.4); }
-.ah-cell.is-today { box-shadow: inset 0 0 0 1.5px var(--orange); }
+.ah-cell.is-today { border-radius: 50%; }
 .ah-foot {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
 }
