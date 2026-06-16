@@ -8,7 +8,7 @@ type Props = { entries: Entry[]; year: number };
 
 type Cell = { iso: string; count: number; level: number; inYear: boolean };
 
-const WEEKDAY_LABELS = ["Po", "", "St", "", "Pá", "", ""];
+const WEEKDAY_LABELS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
 // Počet zásahů → úroveň 0–4 (0 = žádný). Stupnice je dynamická: nejsvětlejší
 // úroveň (4) patří VÝHRADNĚ dnům s nejvyšším denním počtem v roce. Ostatní dny
