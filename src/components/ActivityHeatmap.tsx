@@ -10,9 +10,11 @@ type Cell = { iso: string; count: number; level: number; inYear: boolean };
 
 const WEEKDAY_LABELS = ["Po", "", "St", "", "Pá", "", ""];
 
-// Počet zásahů → úroveň 0–4 (0 = žádný). Zásahů za den bývá málo,
-// proto pevná stupnice 1/2/3/4+ místo kvartilů.
-const levelOf = (count: number): number => (count <= 0 ? 0 : Math.min(4, count));
+// Počet zásahů → úroveň 0–4 (0 = žádný). Stupnice je dynamická podle nejvyššího
+// denního počtu v roce (kvartily z maxima), aby byly rozdíly vidět i když má
+// většina dnů podobně vysoký počet.
+const levelOf = (count: number, max: number): number =>
+  count <= 0 ? 0 : max <= 1 ? 4 : Math.max(1, Math.min(4, Math.ceil((count / max) * 4)));
 
 // Monday-based index (Po = 0 … Ne = 6).
 const mondayIdx = (d: Date): number => (d.getDay() + 6) % 7;
@@ -36,6 +38,8 @@ export function ActivityHeatmap({ entries, year }: Props) {
       byDate.set(e.date, (byDate.get(e.date) ?? 0) + 1);
       total += 1;
     }
+    let maxCount = 0;
+    for (const v of byDate.values()) if (v > maxCount) maxCount = v;
 
     // Mřížka: od pondělí týdne s 1. lednem až do neděle týdne s 31. prosincem.
     const yearStart = new Date(year, 0, 1);
@@ -54,7 +58,7 @@ export function ActivityHeatmap({ entries, year }: Props) {
         const inYear = cur.getFullYear() === year;
         const iso = isoOf(cur);
         const count = inYear ? byDate.get(iso) ?? 0 : 0;
-        week.push({ iso, count, level: levelOf(count), inYear });
+        week.push({ iso, count, level: levelOf(count, maxCount), inYear });
         if (inYear && weekMonth === -1) weekMonth = cur.getMonth();
         cur.setDate(cur.getDate() + 1);
       }
