@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { MoMChange } from "../types";
 import { ArrowUpRight, ArrowDownRight } from "../icons";
 import { num1 } from "../utils/format";
@@ -6,6 +7,7 @@ type Props = {
   label: string;
   value: string;
   unit?: string;
+  icon?: ReactNode;
   series?: number[];
   nowIndex?: number;
   change?: MoMChange;
@@ -15,13 +17,16 @@ type Props = {
   extraFoot?: string;
 };
 
-export function Kpi({ label, value, unit, series = [], nowIndex, change, changeLabel = "vs. minulý měsíc", accent, foot, extraFoot }: Props) {
+export function Kpi({ label, value, unit, icon, series = [], nowIndex, change, changeLabel = "vs. minulý měsíc", accent, foot, extraFoot }: Props) {
   const max = Math.max(...series, 1);
   const highlight = nowIndex ?? series.length - 1;
   return (
     <div className={"od-kpi" + (accent ? " is-accent" : "")}>
       <div className="od-kpi-top">
-        <span className="od-kpi-label">{label}</span>
+        <div className="od-kpi-lead">
+          {icon && <span className="od-kpi-ico">{icon}</span>}
+          <span className="od-kpi-label">{label}</span>
+        </div>
         {series.length > 0 && (
           <div className="od-spark">
             {series.map((v, i) => (

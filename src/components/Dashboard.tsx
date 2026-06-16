@@ -5,9 +5,10 @@ import { czk, dateLabel, parseAmount, todayISO } from "../utils/format";
 import { dayStat, monthChange, periodOf } from "../utils/stats";
 import { useSettings } from "../utils/SettingsContext";
 import { useRowEdit } from "../hooks/useRowEdit";
-import { Truck, BadgeCheck } from "../icons";
+import { Truck, Banknote, TrendingUp } from "../icons";
 import { Kpi } from "./Kpi";
 import { LineTrend } from "./LineTrend";
+import { ActivityHeatmap } from "./ActivityHeatmap";
 import { SummaryTable } from "./SummaryTable";
 import { AmountInput, DateInput, RowActions } from "./RowActions";
 import { Dropdown } from "./Dropdown";
@@ -51,7 +52,6 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
   const [selMonth, setSelMonth] = useState(CURRENT_MONTH);
   const monthInView = selMonth >= 0 && selMonth <= 11 ? selMonth : CURRENT_MONTH;
   const month = months[monthInView];
-  const monthPos = activeMonths.indexOf(monthInView);
 
   const [trendMode, setTrendMode] = useState<TrendMode>("days");
 
@@ -154,16 +154,14 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
         <Kpi
           label="Celkový obrat"
           value={czk(month.total)}
-          series={shown.map((m) => m.total)}
-          nowIndex={monthPos}
+          icon={<Banknote size={18} />}
           change={monthChange(months, monthInView, (m) => m.total)}
           extraFoot={`Bez DPH: ${czk(month.total / (1 + VAT_RATE))} (DPH ${VAT_PCT} %)`}
         />
         <Kpi
           label="Čistý zisk"
           value={czk(month.profit)}
-          series={shown.map((m) => m.profit)}
-          nowIndex={monthPos}
+          icon={<TrendingUp size={18} />}
           accent
           change={monthChange(months, monthInView, (m) => m.profit)}
           extraFoot={month.days ? `Ø ${czk(month.avgProfitPerDay)} / den (${month.days} dní)` : undefined}
@@ -172,8 +170,7 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
           label="Počet zásahů"
           value={String(month.count)}
           unit="zásahů"
-          series={shown.map((m) => m.count)}
-          nowIndex={monthPos}
+          icon={<Truck size={18} />}
           change={monthChange(months, monthInView, (m) => m.count)}
         />
       </div>
@@ -214,6 +211,25 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
       </section>
 
       <section className="od-panel">
+        <div className="od-panel-head" style={{ alignItems: "flex-start" }}>
+          <div>
+            <div className="od-panel-title">Aktivita</div>
+            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--muted)" }}>
+              počet zásahů za den
+            </span>
+          </div>
+          <span className="ah-legend">
+            Méně
+            {[0, 1, 2, 3, 4].map((l) => (
+              <span key={l} className={"ah-cell ah-l" + l} />
+            ))}
+            Více
+          </span>
+        </div>
+        <ActivityHeatmap entries={entries} year={settings.selectedYear} />
+      </section>
+
+      <section className="od-panel">
         <div className="od-panel-head"><div className="od-panel-title">Roční souhrn</div></div>
         <SummaryTable shown={shown} year={year} active={active} activeMonths={activeMonths} />
         <p className="od-note">
@@ -239,7 +255,6 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
                   <th>Měsíc</th>
                   <th className="r">Částka</th>
                   <th className="r">Zisk {PROFIT_PCT} %</th>
-                  <th>Stav</th>
                   <th></th>
                 </tr>
               </thead>
@@ -258,11 +273,6 @@ export function Dashboard({ stats, entries, activeMonths, onEdit, onRequestDelet
                         {editing ? <AmountInput ed={ed} /> : czk(e.amount)}
                       </td>
                       <td className="r mono profit">{czk(prev * PROFIT_RATE)}</td>
-                      <td>
-                        <span className="od-badge">
-                          <BadgeCheck size={13} /> Zapsáno
-                        </span>
-                      </td>
                       <td className="r">
                         <RowActions e={e} ed={ed} onRequestDelete={onRequestDelete} />
                       </td>

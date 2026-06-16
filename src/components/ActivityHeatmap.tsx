@@ -1,0 +1,161 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import type { Entry } from "../types";
+import { MONTHS_SHORT } from "../constants";
+import { plural, todayISO, weekdayLabel } from "../utils/format";
+
+type Props = { entries: Entry[]; year: number };
+
+type Cell = { iso: string; count: number; level: number; inYear: boolean };
+
+const WEEKDAY_LABELS = ["Po", "", "St", "", "Pá", "", ""];
+
+// Počet zásahů → úroveň 0–4 (0 = žádný). Zásahů za den bývá málo,
+// proto pevná stupnice 1/2/3/4+ místo kvartilů.
+const levelOf = (count: number): number => (count <= 0 ? 0 : Math.min(4, count));
+
+// Monday-based index (Po = 0 … Ne = 6).
+const mondayIdx = (d: Date): number => (d.getDay() + 6) % 7;
+
+const isoOf = (d: Date): string =>
+  d.getFullYear() +
+  "-" +
+  String(d.getMonth() + 1).padStart(2, "0") +
+  "-" +
+  String(d.getDate()).padStart(2, "0");
+
+export function ActivityHeatmap({ entries, year }: Props) {
+  const today = todayISO();
+
+  const { weeks, monthLabels, total, activeDays } = useMemo(() => {
+    // Počet zásahů na kalendářní den (skutečné datum, ne výplatní období).
+    const byDate = new Map<string, number>();
+    let total = 0;
+    for (const e of entries) {
+      if (parseInt(e.date.slice(0, 4), 10) !== year) continue;
+      byDate.set(e.date, (byDate.get(e.date) ?? 0) + 1);
+      total += 1;
+    }
+
+    // Mřížka: od pondělí týdne s 1. lednem až do neděle týdne s 31. prosincem.
+    const yearStart = new Date(year, 0, 1);
+    const gridStart = new Date(year, 0, 1 - mondayIdx(yearStart));
+    const yearEnd = new Date(year, 11, 31);
+    const gridEnd = new Date(year, 11, 31 + (6 - mondayIdx(yearEnd)));
+
+    const weeks: Cell[][] = [];
+    const monthLabels: { col: number; label: string }[] = [];
+    let prevMonth = -1;
+    const cur = new Date(gridStart);
+    while (cur <= gridEnd) {
+      const week: Cell[] = [];
+      let weekMonth = -1;
+      for (let r = 0; r < 7; r++) {
+        const inYear = cur.getFullYear() === year;
+        const iso = isoOf(cur);
+        const count = inYear ? byDate.get(iso) ?? 0 : 0;
+        week.push({ iso, count, level: levelOf(count), inYear });
+        if (inYear && weekMonth === -1) weekMonth = cur.getMonth();
+        cur.setDate(cur.getDate() + 1);
+      }
+      if (weekMonth !== -1 && weekMonth !== prevMonth) {
+        monthLabels.push({ col: weeks.length, label: MONTHS_SHORT[weekMonth] });
+        prevMonth = weekMonth;
+      }
+      weeks.push(week);
+    }
+
+    return { weeks, monthLabels, total, activeDays: byDate.size };
+  }, [entries, year]);
+
+  const monthByCol = new Map(monthLabels.map((m) => [m.col, m.label]));
+
+  // Velikost buňky se dopočítá z šířky panelu, aby se mřížka roztáhla na celou
+  // šířku. Na úzkém displeji spadne na minimum a obsah se scrolluje.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [cell, setCell] = useState(14);
+  const [hover, setHover] = useState<{ x: number; y: number; iso: string; count: number } | null>(null);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || weeks.length === 0) return;
+    const GAP = 3, GUT = 30, MIN = 9, MAX = 30;
+    const update = () => {
+      const w = el.clientWidth || 0;
+      const avail = w - GUT - GAP - (weeks.length - 1) * GAP;
+      setCell(Math.max(MIN, Math.min(MAX, Math.floor(avail / weeks.length))));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [weeks.length]);
+
+  const fullDate = (iso: string): string => {
+    const [y, m, d] = iso.split("-");
+    return `${+d}. ${+m}. ${y}`;
+  };
+  const weekdayCap = (iso: string): string => {
+    const w = weekdayLabel(iso);
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  };
+
+  return (
+    <div className="ah" ref={wrapRef} style={{ "--ah-cell": cell + "px" } as CSSProperties}>
+      <div className="ah-scroll">
+        <div className="ah-months" style={{ gridTemplateColumns: `repeat(${weeks.length}, var(--ah-cell))` }}>
+          {weeks.map((_, c) => (
+            <span key={c} className="ah-month">{monthByCol.get(c) ?? ""}</span>
+          ))}
+        </div>
+        <div className="ah-body">
+          <div className="ah-days">
+            {WEEKDAY_LABELS.map((d, i) => (
+              <span key={i} className="ah-day">{d}</span>
+            ))}
+          </div>
+          <div className="ah-grid" onMouseLeave={() => setHover(null)}>
+            {weeks.map((week, c) => (
+              <div key={c} className="ah-col">
+                {week.map((dc) =>
+                  dc.inYear ? (
+                    <div
+                      key={dc.iso}
+                      className={"ah-cell ah-l" + dc.level + (dc.iso === today ? " is-today" : "")}
+                      onMouseEnter={(e) => {
+                        const wrap = wrapRef.current;
+                        if (!wrap) return;
+                        const wr = wrap.getBoundingClientRect();
+                        const r = e.currentTarget.getBoundingClientRect();
+                        const HALF = 104;
+                        const x = Math.min(Math.max(r.left - wr.left + r.width / 2, HALF), wr.width - HALF);
+                        setHover({ x, y: r.top - wr.top, iso: dc.iso, count: dc.count });
+                      }}
+                    />
+                  ) : (
+                    <div key={dc.iso} className="ah-cell ah-empty" />
+                  ),
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {hover && (
+        <div className="ah-tip" style={{ left: hover.x, top: hover.y }}>
+          <div className="od-charttip">
+            <div className="od-tip-h">{weekdayCap(hover.iso)} · {fullDate(hover.iso)}</div>
+            <div className="od-tip-r">
+              <span className="d n" /> Zásahy <b>{hover.count}</b>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="ah-foot">
+        <span className="ah-foot-info">
+          {activeDays} {plural(activeDays, "den", "dny", "dní")} se zásahy · {total} celkem
+        </span>
+      </div>
+    </div>
+  );
+}

@@ -4,7 +4,7 @@ import { MONTHS, CURRENT_MONTH, CURRENT_YEAR, PROFIT_RATE, PROFIT_PCT } from "..
 import { czk, dateLabel, groupAmount, parseAmount, todayISO, weekdayLabel, plural } from "../utils/format";
 import { useSettings } from "../utils/SettingsContext";
 import { useRowEdit } from "../hooks/useRowEdit";
-import { Truck, Plus } from "../icons";
+import { Truck, Plus, Banknote, TrendingUp } from "../icons";
 import { Kpi } from "./Kpi";
 import { AmountInput, DateInput, RowActions } from "./RowActions";
 
@@ -63,12 +63,14 @@ export function MonthView({ m, entries, monthStat, onAdd, onEdit, onRequestDelet
         <Kpi
           label="Celková částka"
           value={czk(monthStat.total)}
+          icon={<Banknote size={18} />}
           series={sorted.map((e) => e.amount)}
           foot={"Ø " + czk(monthStat.avgAmount) + " / zásah"}
         />
         <Kpi
           label="Čistý zisk"
           value={czk(monthStat.profit)}
+          icon={<TrendingUp size={18} />}
           series={sorted.map((e) => e.amount * PROFIT_RATE)}
           accent
           foot={"Ø " + czk(monthStat.avgProfit) + " / zásah"}
@@ -78,6 +80,7 @@ export function MonthView({ m, entries, monthStat, onAdd, onEdit, onRequestDelet
           label="Počet zásahů"
           value={String(monthStat.count)}
           unit="zásahů"
+          icon={<Truck size={18} />}
           series={sorted.map((e) => e.amount)}
           foot={MONTHS[m] + " " + year}
         />

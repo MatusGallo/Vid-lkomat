@@ -146,7 +146,7 @@ html, body { margin: 0; padding: 0; background: #141210; }
 .od-kpis-solo .od-kpi-top,
 .od-kpis-solo .od-kpi-val,
 .od-kpis-solo .od-kpi-foot { position: relative; z-index: 1; }
-.od-kpis-solo .od-kpi-label { color: var(--orange); font-size: 13px; letter-spacing: .14em; }
+.od-kpis-solo .od-kpi-label { color: var(--orange); font-size: 14px; letter-spacing: .14em; }
 .od-kpis-solo .od-kpi-val {
   font-size: clamp(42px, 6.5vw, 66px); line-height: 1; margin: 14px 0 16px; letter-spacing: -.02em;
   background: linear-gradient(95deg, #ffc699, var(--orange) 70%);
@@ -166,7 +166,9 @@ html, body { margin: 0; padding: 0; background: #141210; }
   background: linear-gradient(165deg, rgba(244, 113, 30, .14), var(--card) 58%);
 }
 .od-kpi-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.od-kpi-label { font-size: 12px; letter-spacing: .07em; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.od-kpi-lead { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.od-kpi-ico { display: grid; place-items: center; flex: 0 0 auto; color: var(--muted); }
+.od-kpi-label { font-size: 14px; letter-spacing: .07em; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
 .od-spark { display: flex; align-items: flex-end; gap: 3px; height: 34px; }
 .od-spark-bar { width: 4px; border-radius: 2px; background: var(--orange-dim); min-height: 8px; transition: height .25s ease; }
 .od-spark-bar.now { background: linear-gradient(180deg, #ffae73, var(--orange)); box-shadow: 0 0 10px var(--orange-soft); }
@@ -617,4 +619,52 @@ html, body { margin: 0; padding: 0; background: #141210; }
   .od-panel-tools { width: 100%; }
   .od-switch { display: flex; width: 100%; }
   .od-switch-btn { flex: 1; text-align: center; }
+}
+
+/* Mapa aktivity (GitHub-style heatmap dle počtu zásahů za den) */
+.ah { --ah-cell: 13px; --ah-gap: 3px; --ah-gut: 30px; position: relative; display: flex; flex-direction: column; gap: 14px; }
+.ah-tip { position: absolute; transform: translate(-50%, -100%); margin-top: -8px; pointer-events: none; z-index: 6; }
+.ah-tip .od-charttip { min-width: 0; white-space: nowrap; }
+.ah-scroll { overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.ah-scroll::-webkit-scrollbar { height: 8px; }
+.ah-scroll::-webkit-scrollbar-track { background: transparent; }
+.ah-scroll::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 8px; }
+.ah-months {
+  display: grid; column-gap: var(--ah-gap); margin-bottom: 6px;
+  margin-left: calc(var(--ah-gut) + var(--ah-gap)); width: max-content;
+}
+.ah-month {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint);
+  white-space: nowrap; overflow: visible; height: 14px;
+}
+.ah-body { display: flex; gap: var(--ah-gap); width: max-content; }
+.ah-days { display: flex; flex-direction: column; gap: var(--ah-gap); flex: 0 0 var(--ah-gut); }
+.ah-day {
+  height: var(--ah-cell); display: flex; align-items: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--faint);
+}
+.ah-grid { display: flex; gap: var(--ah-gap); }
+.ah-col { display: flex; flex-direction: column; gap: var(--ah-gap); }
+.ah-cell { width: var(--ah-cell); height: var(--ah-cell); border-radius: 3px; flex: 0 0 auto; }
+.ah-empty { background: transparent; }
+.ah-l0 { background: #26241f; }
+.ah-l1 { background: #1e4d31; }
+.ah-l2 { background: #2a7546; }
+.ah-l3 { background: #3da869; }
+.ah-l4 { background: #62d68f; }
+.ah-grid .ah-cell:not(.ah-empty) { cursor: default; transition: filter .12s; }
+.ah-grid .ah-cell:not(.ah-empty):hover { filter: brightness(1.4); }
+.ah-cell.is-today { box-shadow: inset 0 0 0 1.5px var(--orange); }
+.ah-foot {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.ah-foot-info { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+.ah-legend {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--faint);
+}
+.ah-legend .ah-cell { width: 15px; height: 15px; }
+
+@media (max-width: 620px) {
+  .ah { --ah-cell: 12px; --ah-gut: 26px; }
 }
