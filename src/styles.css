@@ -648,10 +648,10 @@ html, body { margin: 0; padding: 0; background: #141210; }
 .ah-cell { width: var(--ah-cell); height: var(--ah-cell); border-radius: 3px; flex: 0 0 auto; }
 .ah-empty { background: transparent; }
 .ah-l0 { background: #26241f; }
-.ah-l1 { background: #1e4d31; }
-.ah-l2 { background: #2a7546; }
-.ah-l3 { background: #3da869; }
-.ah-l4 { background: #62d68f; }
+.ah-l1 { background: #0f3d27; }
+.ah-l2 { background: #1c7244; }
+.ah-l3 { background: #36ad6c; }
+.ah-l4 { background: #74efa8; }
 .ah-grid .ah-cell:not(.ah-empty) { cursor: default; transition: filter .12s; }
 .ah-grid .ah-cell:not(.ah-empty):hover { filter: brightness(1.4); }
 .ah-cell.is-today { box-shadow: inset 0 0 0 1.5px var(--orange); }
