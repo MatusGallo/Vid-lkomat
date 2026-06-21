@@ -1,21 +1,16 @@
 import type { Entry, Stats, MonthStat, MoMChange } from "../types";
 import { CURRENT_YEAR, CURRENT_MONTH, PROFIT_RATE } from "../constants";
 
-// Výplatní období zápisu: den ≥ 21 patří už do následujícího měsíce.
-// Vrací { y, m } – rok a 0-based index měsíce, podle kterého se zápis počítá.
+// Zápis patří do kalendářního měsíce svého data (celý měsíc, 1.–poslední den).
+// Vrací { y, m } – rok a 0-based index měsíce.
 export function periodOf(iso: string): { y: number; m: number } {
   const y = parseInt(iso.slice(0, 4), 10);
   const mo = parseInt(iso.slice(5, 7), 10) - 1;
-  const d = parseInt(iso.slice(8, 10), 10);
-  if (d >= 21) {
-    const nm = mo + 1;
-    return nm > 11 ? { y: y + 1, m: 0 } : { y, m: nm };
-  }
   return { y, m: mo };
 }
 
 export function computeStats(entries: Entry[], year: number): Stats {
-  // Jeden průchod: každý zápis roztřídíme do měsíce svého výplatního období.
+  // Jeden průchod: každý zápis roztřídíme do jeho kalendářního měsíce.
   const buckets: Entry[][] = Array.from({ length: 12 }, () => []);
   for (const e of entries) {
     const p = periodOf(e.date);
