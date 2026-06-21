@@ -104,7 +104,11 @@ export function LineTrend({ points }: Props) {
   const tipX = hover != null ? Math.min(Math.max(X(hover), tipHalf + 6), w - tipHalf - 6) : 0;
   const tipY = hv && hv.count ? Math.max(28, Math.min(Y(hv.total), Y(hv.profit))) : 0;
 
-  const labelStride = Math.max(1, Math.ceil(n / Math.max(6, Math.floor(plotW / 56))));
+  // Počet popisků odvozený jen od dostupné šířky (na mobilu míň, ať se
+  // nepřekrývají). Kotvíme od konce, aby poslední datum bylo vždy vidět
+  // a rozestupy byly rovnoměrné.
+  const labelSlots = Math.max(2, Math.floor(plotW / (w < 480 ? 52 : 58)));
+  const labelStride = Math.max(1, Math.ceil(n / labelSlots));
 
   return (
     <div className="od-linewrap" ref={wrapRef}>
@@ -144,7 +148,7 @@ export function LineTrend({ points }: Props) {
           );
         })}
         {points.map((p, i) =>
-          i % labelStride === 0 || i === n - 1 ? (
+          (n - 1 - i) % labelStride === 0 ? (
             <text
               key={i}
               className="od-lt-axis"
